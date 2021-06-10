@@ -302,7 +302,8 @@ def run(fn, text):
 		# Generate tokens
 		lexer = Lexer(fn, text)
 		tokens, error = lexer.validarTokens()
-		if error: return None, error
+		if error: 
+			return None, error
 		
 		# Generate AST
 		parser = Parser(tokens)
