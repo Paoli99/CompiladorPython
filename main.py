@@ -24,7 +24,6 @@ def click():
 	code = codeText.get('1.0', 'end-1c')   
 	print(code)
 
-	
 	#text = input('basic > ')
 	result, error = lexer.run('<stdin>', code)
 
@@ -33,11 +32,11 @@ def click():
 		errorMessage = error.as_string()
 
 		#lista.insert(lista.index('end'), str(errorMessage))
-		errorCanvas.create_text(100,100, text = errorMessage)
+		errorCanvas.create_text(200,100, text = errorMessage)
 	else: 
 		print(result)
 		results = result 
-		errorCanvas.create_text(100,100, text = results)
+		errorCanvas.create_text(200,100, text = results)
 
 def abrirTxt():
     pass 

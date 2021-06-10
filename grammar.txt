@@ -1,7 +1,7 @@
-expr    : term ((PIU|MINUS) term)*
+expr    : term ((PIU|MENO) term)*
 
 term    : factor ((MUL|DIV) factor)*
 
 factor  : INT|FLOAT
-				: (PIU|MINUS) factor
-				: LPAREN expr RPAREN
+				: (PIU|MENO) factor
+				: PARENTESI_APERTA expr PARENTESI_CHIUSA
