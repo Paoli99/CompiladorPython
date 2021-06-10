@@ -36,6 +36,7 @@ def click():
 	else: 
 		print(result)
 		results = result 
+		errorCanvas.create_text(200,80, text = 'Analisis correcto!')
 		errorCanvas.create_text(200,100, text = results)
 
 def abrirTxt():
