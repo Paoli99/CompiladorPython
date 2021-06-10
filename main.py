@@ -8,7 +8,7 @@ import lexer
 
 config = default 
 window = tk.Tk()
-window.title("ScrolledText Widget")
+window.title("Compilador")
 window.config(bg = 'white')
 window.geometry(f'{config["reference_width"] + 30}x{config["reference_height"]+230}')
 window.wm_maxsize(config["reference_width"] + 30, config["reference_height"]+230)
@@ -25,7 +25,7 @@ def click():
 	print(code)
 
 	#text = input('basic > ')
-	result, error = lexer.run('<stdin>', code)
+	result, error = lexer.run('<archivo>', code)
 
 	if error: 
 		print(error.as_string())

@@ -8,7 +8,7 @@ from LL1 import *
 # CONSTANTS
 #######################################
 
-DIGITS = '0123456789'
+NUMBERS = '0123456789'
 
 #######################################
 # ERRORS
@@ -23,17 +23,17 @@ class Error:
 		
 		def as_string(self):
 				result  = f'{self.error_name}: {self.details}\n'
-				result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
+				result += f'Archivo {self.pos_start.fn}, line {self.pos_start.ln + 1}'
 				result += '\n\n' + LL1(self.pos_start.ftxt, self.pos_start, self.pos_end)
 				return result
 
 class IllegalCharError(Error):
 		def __init__(self, pos_start, pos_end, details):
-				super().__init__(pos_start, pos_end, 'Illegal Character', details)
+				super().__init__(pos_start, pos_end, 'Caracter ilegal', details)
 
 class InvalidSyntaxError(Error):
 		def __init__(self, pos_start, pos_end, details=''):
-				super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
+				super().__init__(pos_start, pos_end, 'Syntax invalido', details)
 
 #######################################
 # POSITION
@@ -64,15 +64,15 @@ class Position:
 # TOKENS
 #######################################
 
-TT_INT		= 'INTERO'
-TT_FLOAT    = 'REALE'
-TT_PLUS     = 'PIU'
-TT_MINUS    = 'MENO'
-TT_MUL      = 'MOLTIPLICAZIONE'
-TT_DIV      = 'DIVISIONE'
-TT_LPAREN   = 'PARENTESI_APERTA'
-TT_RPAREN   = 'PARENTESI_CHIUSA'
-TT_EOF		= 'EOF'
+INTERO		= 'INTERO'
+REALE    = 'REALE'
+PIU     = 'PIU'
+MENO    = 'MENO'
+MUL      = 'MOLTIPLICAZIONE'
+DIV     = 'DIVISIONE'
+PARENTESI_APERTA   = 'PARENTESI_APERTA'
+PARENTESI_CHIUSA  = 'PARENTESI_CHIUSA'
+EOF		= 'EOF'
 
 class Token:
 		def __init__(self, type_, value=None, pos_start=None, pos_end=None):
@@ -107,31 +107,31 @@ class Lexer:
 				self.pos.advance(self.current_char)
 				self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
-		def make_tokens(self):
+		def validarTokens(self):
 				tokens = []
 
 				while self.current_char != None:
 						if self.current_char in ' \t':
 								self.advance()
-						elif self.current_char in DIGITS:
-								tokens.append(self.make_number())
+						elif self.current_char in NUMBERS:
+								tokens.append(self.validarNumeros())
 						elif self.current_char == '+':
-								tokens.append(Token(TT_PLUS, pos_start=self.pos))
+								tokens.append(Token(PIU, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == '-':
-								tokens.append(Token(TT_MINUS, pos_start=self.pos))
+								tokens.append(Token(MENO, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == '*':
-								tokens.append(Token(TT_MUL, pos_start=self.pos))
+								tokens.append(Token(MUL, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == '/':
-								tokens.append(Token(TT_DIV, pos_start=self.pos))
+								tokens.append(Token(PARENTESI_APERTA, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == '(':
-								tokens.append(Token(TT_LPAREN, pos_start=self.pos))
+								tokens.append(Token(PARENTESI_APERTA, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == ')':
-								tokens.append(Token(TT_RPAREN, pos_start=self.pos))
+								tokens.append(Token(PARENTESI_APERTA, pos_start=self.pos))
 								self.advance()
 						else:
 								pos_start = self.pos.copy()
@@ -139,15 +139,15 @@ class Lexer:
 								self.advance()
 								return [], IllegalCharError(pos_start, self.pos, "'" + char + "'")
 
-				tokens.append(Token(TT_EOF, pos_start=self.pos))
+				tokens.append(Token(EOF, pos_start=self.pos))
 				return tokens, None
 
-		def make_number(self):
+		def validarNumeros(self):
 				num_str = ''
 				dot_count = 0
 				pos_start = self.pos.copy()
 
-				while self.current_char != None and self.current_char in DIGITS + '.':
+				while self.current_char != None and self.current_char in NUMBERS + '.':
 						if self.current_char == '.':
 								if dot_count == 1: break
 								dot_count += 1
@@ -157,9 +157,9 @@ class Lexer:
 						self.advance()
 
 				if dot_count == 0:
-						return Token(TT_INT, int(num_str), pos_start, self.pos)
+						return Token(INTERO, int(num_str), pos_start, self.pos)
 				else:
-						return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
+						return Token(REALE, float(num_str), pos_start, self.pos)
 
 #######################################
 # NODES
@@ -231,10 +231,10 @@ class Parser:
 
 	def parse(self):
 		res = self.expr()
-		if not res.error and self.current_tok.type != TT_EOF:
+		if not res.error and self.current_tok.type != EOF:
 			return res.failure(InvalidSyntaxError(
 				self.current_tok.pos_start, self.current_tok.pos_end,
-				"Expected '+', '-', '*' or '/'"
+				"\n Caracter esperado: '+', '-', '*' , '/' '(' "
 			))
 		return res
 
@@ -244,21 +244,21 @@ class Parser:
 		res = ParseResult()
 		tok = self.current_tok
 
-		if tok.type in (TT_PLUS, TT_MINUS):
+		if tok.type in (PIU, MENO):
 			res.register(self.advance())
 			factor = res.register(self.factor())
 			if res.error: return res
 			return res.success(UnaryOpNode(tok, factor))
 		
-		elif tok.type in (TT_INT, TT_FLOAT):
+		elif tok.type in (INTERO, REALE):
 			res.register(self.advance())
 			return res.success(NumberNode(tok))
 
-		elif tok.type == TT_LPAREN:
+		elif tok.type == PARENTESI_APERTA:
 			res.register(self.advance())
 			expr = res.register(self.expr())
 			if res.error: return res
-			if self.current_tok.type == TT_RPAREN:
+			if self.current_tok.type == PARENTESI_APERTA:
 				res.register(self.advance())
 				return res.success(expr)
 			else:
@@ -273,10 +273,10 @@ class Parser:
 		))
 
 	def term(self):
-		return self.bin_op(self.factor, (TT_MUL, TT_DIV))
+		return self.bin_op(self.factor, (MUL, PARENTESI_APERTA))
 
 	def expr(self):
-		return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
+		return self.bin_op(self.term, (PIU, MENO))
 
 	###################################
 
@@ -301,7 +301,7 @@ class Parser:
 def run(fn, text):
 		# Generate tokens
 		lexer = Lexer(fn, text)
-		tokens, error = lexer.make_tokens()
+		tokens, error = lexer.validarTokens()
 		if error: return None, error
 		
 		# Generate AST
