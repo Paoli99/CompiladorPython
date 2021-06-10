@@ -64,14 +64,14 @@ class Position:
 # TOKENS
 #######################################
 
-TT_INT		= 'INT'
-TT_FLOAT    = 'FLOAT'
-TT_PLUS     = 'PLUS'
-TT_MINUS    = 'MINUS'
-TT_MUL      = 'MUL'
-TT_DIV      = 'DIV'
-TT_LPAREN   = 'LPAREN'
-TT_RPAREN   = 'RPAREN'
+TT_INT		= 'INTERO'
+TT_FLOAT    = 'REALE'
+TT_PLUS     = 'PIU'
+TT_MINUS    = 'MENO'
+TT_MUL      = 'MOLTIPLICAZIONE'
+TT_DIV      = 'DIVISIONE'
+TT_LPAREN   = 'PARENTESI APERTA'
+TT_RPAREN   = 'PARENTESI CHIUSA'
 TT_EOF		= 'EOF'
 
 class Token:
