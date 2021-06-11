@@ -1,18 +1,6 @@
-#######################################
-# IMPORTS
-#######################################
-
 from LL1 import *
 
-#######################################
-# CONSTANTS
-#######################################
-
-NUMBERS = '0123456789'
-
-#######################################
-# ERRORS
-#######################################
+DIGITS = '0123456789'
 
 class Error:
 		def __init__(self, pos_start, pos_end, error_name, details):
@@ -23,21 +11,17 @@ class Error:
 		
 		def as_string(self):
 				result  = f'{self.error_name}: {self.details}\n'
-				result += f'Archivo {self.pos_start.fn}, line {self.pos_start.ln + 1}'
+				result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
 				result += '\n\n' + LL1(self.pos_start.ftxt, self.pos_start, self.pos_end)
 				return result
 
 class IllegalCharError(Error):
 		def __init__(self, pos_start, pos_end, details):
-				super().__init__(pos_start, pos_end, 'Caracter ilegal', details)
+				super().__init__(pos_start, pos_end, 'Illegal Character', details)
 
 class InvalidSyntaxError(Error):
 		def __init__(self, pos_start, pos_end, details=''):
-				super().__init__(pos_start, pos_end, 'Syntax invalido', details)
-
-#######################################
-# POSITION
-#######################################
+				super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
 
 class Position:
 		def __init__(self, idx, ln, col, fn, ftxt):
@@ -60,9 +44,7 @@ class Position:
 		def copy(self):
 				return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
 
-#######################################
 # TOKENS
-#######################################
 
 INTERO		= 'INTERO'
 REALE    = 'REALE'
@@ -91,10 +73,6 @@ class Token:
 				if self.value: return f'{self.type}:{self.value}'
 				return f'{self.type}'
 
-#######################################
-# LEXER
-#######################################
-
 class Lexer:
 		def __init__(self, fn, text):
 				self.fn = fn
@@ -107,14 +85,14 @@ class Lexer:
 				self.pos.advance(self.current_char)
 				self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
 
-		def validarTokens(self):
+		def make_tokens(self):
 				tokens = []
 
 				while self.current_char != None:
 						if self.current_char in ' \t':
 								self.advance()
-						elif self.current_char in NUMBERS:
-								tokens.append(self.validarNumeros())
+						elif self.current_char in DIGITS:
+								tokens.append(self.make_number())
 						elif self.current_char == '+':
 								tokens.append(Token(PIU, pos_start=self.pos))
 								self.advance()
@@ -125,13 +103,13 @@ class Lexer:
 								tokens.append(Token(MUL, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == '/':
-								tokens.append(Token(PARENTESI_APERTA, pos_start=self.pos))
+								tokens.append(Token(DIV, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == '(':
 								tokens.append(Token(PARENTESI_APERTA, pos_start=self.pos))
 								self.advance()
 						elif self.current_char == ')':
-								tokens.append(Token(PARENTESI_APERTA, pos_start=self.pos))
+								tokens.append(Token(PARENTESI_CHIUSA, pos_start=self.pos))
 								self.advance()
 						else:
 								pos_start = self.pos.copy()
@@ -142,12 +120,12 @@ class Lexer:
 				tokens.append(Token(EOF, pos_start=self.pos))
 				return tokens, None
 
-		def validarNumeros(self):
+		def make_number(self):
 				num_str = ''
 				dot_count = 0
 				pos_start = self.pos.copy()
 
-				while self.current_char != None and self.current_char in NUMBERS + '.':
+				while self.current_char != None and self.current_char in DIGITS + '.':
 						if self.current_char == '.':
 								if dot_count == 1: break
 								dot_count += 1
@@ -160,11 +138,6 @@ class Lexer:
 						return Token(INTERO, int(num_str), pos_start, self.pos)
 				else:
 						return Token(REALE, float(num_str), pos_start, self.pos)
-
-#######################################
-# NODES
-#######################################
-
 class NumberNode:
 	def __init__(self, tok):
 		self.tok = tok
@@ -189,10 +162,6 @@ class UnaryOpNode:
 	def __repr__(self):
 		return f'({self.op_tok}, {self.node})'
 
-#######################################
-# PARSE RESULT
-#######################################
-
 class ParseResult:
 	def __init__(self):
 		self.error = None
@@ -213,10 +182,6 @@ class ParseResult:
 		self.error = error
 		return self
 
-#######################################
-# PARSER
-#######################################
-
 class Parser:
 	def __init__(self, tokens):
 		self.tokens = tokens
@@ -234,11 +199,11 @@ class Parser:
 		if not res.error and self.current_tok.type != EOF:
 			return res.failure(InvalidSyntaxError(
 				self.current_tok.pos_start, self.current_tok.pos_end,
-				"\n Caracter esperado: '+', '-', '*' , '/' '(' "
+				"Expected '+', '-', '*' or '/'"
 			))
 		return res
 
-	###################################
+	
 
 	def factor(self):
 		res = ParseResult()
@@ -258,7 +223,7 @@ class Parser:
 			res.register(self.advance())
 			expr = res.register(self.expr())
 			if res.error: return res
-			if self.current_tok.type == PARENTESI_APERTA:
+			if self.current_tok.type == PARENTESI_CHIUSA:
 				res.register(self.advance())
 				return res.success(expr)
 			else:
@@ -273,12 +238,12 @@ class Parser:
 		))
 
 	def term(self):
-		return self.bin_op(self.factor, (MUL, PARENTESI_APERTA))
+		return self.bin_op(self.factor, (MUL, DIV))
 
 	def expr(self):
 		return self.bin_op(self.term, (PIU, MENO))
 
-	###################################
+
 
 	def bin_op(self, func, ops):
 		res = ParseResult()
@@ -294,21 +259,14 @@ class Parser:
 
 		return res.success(left)
 
-#######################################
-# RUN
-#######################################
 
 def run(fn, text):
-		# Generate tokens
-		lexer = Lexer(fn, text)
-		tokens, error = lexer.validarTokens()
-		if error: 
-			return None, error
 		
-		# Generate AST
+		lexer = Lexer(fn, text)
+		tokens, error = lexer.make_tokens()
+		if error: return None, error
+				
 		parser = Parser(tokens)
 		ast = parser.parse()
 
 		return ast.node, ast.error
-
-
