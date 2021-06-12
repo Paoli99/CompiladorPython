@@ -1,6 +1,8 @@
 from LL1 import *
 
 DIGITS = '0123456789'
+LETTERS = 'abcdefghijklmnopqrstuvwxyz'
+LETTERSMAYUS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 class Error:
 		def __init__(self, pos_start, pos_end, error_name, details):
@@ -93,6 +95,13 @@ class Lexer:
 								self.advance()
 						elif self.current_char in DIGITS:
 								tokens.append(self.make_number())
+						
+						elif self.current_char in LETTERS:
+								tokens.append(self.make_letter())
+
+						elif self.current_char in LETTERSMAYUS:
+								tokens.append(self.make_letter_mayus())
+
 						elif self.current_char == '+':
 								tokens.append(Token(PIU, pos_start=self.pos))
 								self.advance()
@@ -125,6 +134,8 @@ class Lexer:
 				dot_count = 0
 				pos_start = self.pos.copy()
 
+				
+
 				while self.current_char != None and self.current_char in DIGITS + '.':
 						if self.current_char == '.':
 								if dot_count == 1: break
@@ -138,6 +149,41 @@ class Lexer:
 						return Token(INTERO, int(num_str), pos_start, self.pos)
 				else:
 						return Token(REALE, float(num_str), pos_start, self.pos)
+		
+		def make_letter(self):
+			letter_str = ''
+			letter_count = 0 
+			pos_start = self.pos.copy()
+
+			lettera = 'LETTERA '
+
+			while self.current_char != None and self.current_char in LETTERS:
+						letter_count += 1 
+						letter_str += self.current_char
+						self.advance()
+
+			if letter_count == 1:
+				return Token(INTERO, str(letter_str), pos_start, self.pos)
+			else:
+				return Token(REALE, str(letter_str), pos_start, self.pos)
+
+		def make_letter_mayus(self):
+			letter_str_mayus = ''
+			letter_count_mayus = 0 
+			pos_start = self.pos.copy()
+
+			while self.current_char != None and self.current_char in LETTERSMAYUS:
+						letter_count_mayus += 1 
+						letter_str_mayus += self.current_char
+						self.advance()
+						print(letter_count_mayus)
+
+			if letter_count_mayus == 1:
+				return Token(INTERO, str(letter_str_mayus), pos_start, self.pos)
+			else:
+				return Token(REALE, str(letter_str_mayus), pos_start, self.pos)
+
+
 class NumberNode:
 	def __init__(self, tok):
 		self.tok = tok
@@ -270,3 +316,5 @@ def run(fn, text):
 		ast = parser.parse()
 
 		return ast.node, ast.error
+
+
